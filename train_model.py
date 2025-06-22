@@ -1,8 +1,7 @@
-# train_model.py
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 import joblib
 
 # Load dataset
@@ -12,9 +11,17 @@ df = pd.read_csv("data/train.csv")
 features = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]
 df = df[["Survived"] + features].dropna()
 
-# Encode categorical variables
-df["Sex"] = LabelEncoder().fit_transform(df["Sex"])
-df["Embarked"] = LabelEncoder().fit_transform(df["Embarked"])
+# ✅ Encode categorical variables with explicit mappings
+df["Sex"] = df["Sex"].map({"male": 0, "female": 1})
+df["Embarked"] = df["Embarked"].map({"S": 0, "C": 1, "Q": 2})
+
+# ✅ Add child flag (children under 12)
+df["is_child"] = df["Age"].apply(lambda x: 1 if x < 12 else 0)
+features.append("is_child")
+
+# ✅ Optional: scale continuous features (tree models don’t require it, but good for completeness)
+# scaler = StandardScaler()
+# df[["Age", "Fare"]] = scaler.fit_transform(df[["Age", "Fare"]])
 
 # Define X and y
 X = df[features]
@@ -30,9 +37,12 @@ param_grid = {
     "min_samples_split": [2, 5],
 }
 rf = RandomForestClassifier(random_state=42)
-grid_search = GridSearchCV(rf, param_grid, cv=3, scoring="accuracy", n_jobs=-1)
+grid_search = GridSearchCV(
+    rf, param_grid, cv=3, scoring="f1", n_jobs=-1, verbose=1
+)
 grid_search.fit(X_train, y_train)
 
 # Save best model
 best_model = grid_search.best_estimator_
 joblib.dump(best_model, "titanic_model.pkl")
+print("✅ Model trained and saved as titanic_model.pkl")
