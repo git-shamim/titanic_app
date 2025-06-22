@@ -20,10 +20,12 @@ embarked = st.sidebar.selectbox("Port of Embarkation", ["C", "Q", "S"])
 sibsp = st.sidebar.number_input("No. of Siblings/Spouses Aboard", min_value=0, max_value=10, value=0)
 parch = st.sidebar.number_input("No. of Parents/Children Aboard", min_value=0, max_value=10, value=0)
 
-# Convert inputs to model format
+# Encode inputs
 sex_encoded = 1 if sex == "female" else 0
 embarked_encoded = {"C": 0, "Q": 1, "S": 2}[embarked]
+is_child = 1 if age < 12 else 0
 
+# Create input dataframe
 input_df = pd.DataFrame([{
     "Pclass": pclass,
     "Sex": sex_encoded,
@@ -32,6 +34,7 @@ input_df = pd.DataFrame([{
     "Parch": parch,
     "Fare": fare,
     "Embarked": embarked_encoded,
+    "is_child": is_child
 }])
 
 # Predict
